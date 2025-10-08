@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Live Emotion Detection{% endblock %}
+{% block content %}
+
+<div class="container text-center mt-4">
+  <div class="card p-4 shadow-lg">
+    <h3 class="mb-3">🎥 Live Facial Emotion Detection</h3>
+
+    <video id="video" autoplay playsinline class="w-100 rounded" style="max-width: 600px; border: 3px solid #667eea;"></video>
+
+    <div class="mt-3">
+      <button id="captureBtn" class="btn btn-primary px-4">Analyze Emotion</button>
+    </div>
+
+    <div id="result" class="mt-4 emotion-result d-none">
+      <h5>Detected Emotion: <span id="emotion-text" class="fw-bold"></span></h5>
+      <div class="progress mt-3">
+        <div id="confidence-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const captureBtn = document.getElementById('captureBtn');
+  const resultDiv = document.getElementById('result');
+  const emotionText = document.getElementById('emotion-text');
+  const confidenceBar = document.getElementById('confidence-bar');
+
+  async function startCamera() {
+    try {
+      // Use rear camera on mobile if available
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" } // use "user" for front cam
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+    } catch (err) {
+      alert("Camera access denied or not available: " + err.message);
+    }
+  }
+
+  captureBtn.addEventListener("click", async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg"));
+    const formData = new FormData();
+    formData.append("image", blob, "frame.jpg");
+
+    const response = await fetch("/analyze_frame", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+    resultDiv.classList.remove("d-none");
+    emotionText.innerText = data.emotion;
+    confidenceBar.style.width = data.confidence + "%";
+  });
+
+  startCamera();
+</script>
+
+{% endblock %}

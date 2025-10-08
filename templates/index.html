@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card text-center">
+            <div class="card-body p-5">
+                <i class="fas fa-brain fa-5x text-primary mb-4"></i>
+                <h1 class="card-title mb-4">Facial Emotion Detection AI</h1>
+                <p class="card-text lead mb-4">
+                    Advanced AI-powered facial emotion recognition system using deep learning. 
+                    Detect emotions in real-time through your camera or upload images for analysis.
+                </p>
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <i class="fas fa-upload fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">Upload Image</h5>
+                                <p class="card-text">Upload any image with a face to detect emotions</p>
+                                <a href="{{ url_for('upload_page') }}" class="btn btn-primary">
+                                    <i class="fas fa-image"></i> Analyze Image
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <i class="fas fa-video fa-3x text-success mb-3"></i>
+                                <h5 class="card-title">Live Camera</h5>
+                                <p class="card-text">Real-time emotion detection using your camera</p>
+                                <a href="{{ url_for('camera_page') }}" class="btn btn-primary">
+                                    <i class="fas fa-camera"></i> Start Camera
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h3 class="mb-3">Supported Emotions</h3>
+                    <div class="row">
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-warning text-dark p-2">😊 Happy</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-primary p-2">😢 Sad</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-danger p-2">😠 Angry</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-success p-2">😮 Surprise</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-secondary p-2">😨 Fear</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-info text-dark p-2">🤢 Disgust</span>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <span class="badge bg-dark p-2">😐 Neutral</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
