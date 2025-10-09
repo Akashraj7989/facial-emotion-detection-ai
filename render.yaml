@@ -3,5 +3,5 @@ services:
     name: facial-emotion-detection-ai
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    pythonVersion: 3.12.3
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    plan: free
