@@ -1,111 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Live Emotion Detection{% endblock %}
+
 {% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4">
+                    <i class="fas fa-video"></i> Real-Time Emotion Detection
+                </h2>
 
-<div class="container text-center mt-4">
-  <div class="card p-4 shadow-lg">
-    <h3 class="mb-3">🎥 Live Facial Emotion Detection</h3>
+                <div class="text-center mb-4">
+                    <button id="startCamera" class="btn btn-success me-3">
+                        <i class="fas fa-play"></i> Start Camera
+                    </button>
+                    <button id="stopCamera" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> Stop Camera
+                    </button>
+                </div>
 
-    <div class="position-relative">
-      <video id="video" autoplay playsinline class="w-100 rounded" 
-        style="max-width: 600px; border: 3px solid #667eea;"></video>
+                <div class="text-center">
+                    <div id="videoContainer" style="display: none;">
+                        <img id="videoFeed" src="" style="max-width: 100%; height: auto; border-radius: 10px; border: 3px solid #007bff;">
+                    </div>
+                    <div id="noVideo" class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Click "Start Camera" to begin real-time emotion detection
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h5><i class="fas fa-lightbulb"></i> Instructions:</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Make sure your camera is connected and working</li>
+                        <li><i class="fas fa-check text-success"></i> Position your face clearly in front of the camera</li>
+                        <li><i class="fas fa-check text-success"></i> Good lighting improves detection accuracy</li>
+                        <li><i class="fas fa-check text-success"></i> The system will automatically detect and analyze emotions</li>
+                    </ul>
+                </div>
+
+                <div id="status" class="mt-3"></div>
+            </div>
+        </div>
     </div>
-
-    <div class="mt-3">
-      <select id="cameraSelect" class="form-select mb-3"></select>
-      <button id="captureBtn" class="btn btn-primary px-4">Analyze Emotion</button>
-    </div>
-
-    <div id="result" class="mt-4 emotion-result d-none">
-      <h5>Detected Emotion: <span id="emotion-text" class="fw-bold"></span></h5>
-      <div class="progress mt-3">
-        <div id="confidence-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
-      </div>
-    </div>
-  </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-  const video = document.getElementById('video');
-  const captureBtn = document.getElementById('captureBtn');
-  const resultDiv = document.getElementById('result');
-  const emotionText = document.getElementById('emotion-text');
-  const confidenceBar = document.getElementById('confidence-bar');
-  const cameraSelect = document.getElementById('cameraSelect');
-  let currentStream = null;
+const startButton = document.getElementById('startCamera');
+const stopButton = document.getElementById('stopCamera');
+const videoFeed = document.getElementById('videoFeed');
+const videoContainer = document.getElementById('videoContainer');
+const noVideo = document.getElementById('noVideo');
+const status = document.getElementById('status');
 
-  // ✅ Load and list available cameras (front/rear)
-  async function loadCameras() {
+startButton.addEventListener('click', async function() {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === "videoinput");
+        const response = await fetch('/start_camera');
+        const data = await response.json();
 
-      cameraSelect.innerHTML = "";
-      videoDevices.forEach((device, index) => {
-        const option = document.createElement("option");
-        option.value = device.deviceId;
-        option.text = device.label || `Camera ${index + 1}`;
-        cameraSelect.appendChild(option);
-      });
+        if (response.ok) {
+            videoFeed.src = '/video_feed?' + new Date().getTime();
+            videoContainer.style.display = 'block';
+            noVideo.style.display = 'none';
+            startButton.disabled = true;
+            stopButton.disabled = false;
 
-      // Default to rear camera if on mobile
-      let backCam = videoDevices.find(d => d.label.toLowerCase().includes("back"));
-      startCamera(backCam ? backCam.deviceId : videoDevices[0].deviceId);
-    } catch (err) {
-      alert("Camera access denied or unavailable: " + err.message);
-    }
-  }
-
-  // ✅ Start the selected camera
-  async function startCamera(deviceId) {
-    if (currentStream) {
-      currentStream.getTracks().forEach(track => track.stop());
-    }
-    try {
-      const constraints = {
-        audio: false,
-        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
-      };
-      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = currentStream;
-    } catch (err) {
-      console.error("Camera start error:", err);
-      alert("Unable to access selected camera.");
-    }
-  }
-
-  // ✅ Switch camera when user selects another
-  cameraSelect.addEventListener("change", e => startCamera(e.target.value));
-
-  // ✅ Capture frame and send to backend
-  captureBtn.addEventListener("click", async () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg"));
-    const formData = new FormData();
-    formData.append("image", blob, "frame.jpg");
-
-    try {
-      const response = await fetch("/analyze_frame", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await response.json();
-      resultDiv.classList.remove("d-none");
-      emotionText.innerText = data.emotion;
-      confidenceBar.style.width = (data.confidence || 90) + "%";
+            status.innerHTML = '<div class="alert alert-success"><i class="fas fa-camera"></i> Camera is active - Real-time emotion detection in progress</div>';
+        } else {
+            status.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
+        }
     } catch (error) {
-      console.error("Error detecting emotion:", error);
-      emotionText.innerText = "Error";
+        status.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Failed to start camera</div>';
     }
-  });
+});
 
-  loadCameras();
+stopButton.addEventListener('click', async function() {
+    try {
+        const response = await fetch('/stop_camera');
+        const data = await response.json();
+
+        videoFeed.src = '';
+        videoContainer.style.display = 'none';
+        noVideo.style.display = 'block';
+        startButton.disabled = false;
+        stopButton.disabled = true;
+
+        status.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Camera stopped</div>';
+    } catch (error) {
+        status.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Error stopping camera</div>';
+    }
+});
+
+// Handle video feed errors
+videoFeed.addEventListener('error', function() {
+    status.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Video feed interrupted</div>';
+});
 </script>
-
 {% endblock %}
